@@ -40,6 +40,22 @@ const db = {
                 }
                 console.log("Employee Added!");
               });
+    },
+
+    addNewRole: (newRole) => {
+        sql = `INSERT INTO roles (title, salary, department_id) VALUES ($1, $2, $3)`;
+
+        pool.query(
+          sql,
+          [newRole.title, newRole.salary, newRole.department_id],
+          (err, result) => {
+            if (err) {
+              console.log(err);
+              return;
+            }
+            console.log("Role Added!");
+          }
+        )
     }
 }
 

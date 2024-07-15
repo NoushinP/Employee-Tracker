@@ -120,25 +120,14 @@ function mainMenu() {
               {
                 type: "input",
                 message: "Enter the department id:",
-                name: "departmentId",
+                name: "department_id",
               },
             ])
             .then((answers) => {
-              sql = `INSERT INTO roles (title, salary, department_id) VALUES ($1, $2, $3)`;
-
-              pool.query(
-                sql,
-                [answers.title, answers.salary, answers.departmentId],
-                (err, result) => {
-                  if (err) {
-                    console.log(err);
-                    return;
-                  }
-                  console.log("Role Added!");
-                  mainMenu();
-                }
-              );
+              console.log(answers)
+              db.addNewRole(answers)
             });
+            mainMenu();
           break;
 
         case "View All Departments":
