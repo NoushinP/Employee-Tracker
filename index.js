@@ -1,23 +1,9 @@
 const inquirer = require("inquirer");
-const { Pool } = require("pg");
-
+const db = require("./config")
 let employeeId;
 
-const pool = new Pool(
-  {
-    host: "localhost",
-    user: "postgres",
-    password: "Password1",
-    host: "localhost",
-    database: "employees_db",
-  },
-  console.log(`Connected to the employees_db database.`)
-);
-
-pool.connect();
-
 function mainMenu() {
-  inquirer
+  return inquirer
     .prompt([
       {
         type: "list",
@@ -40,17 +26,8 @@ function mainMenu() {
       let sql = "";
       switch (answers.choice) {
         case "View All Employees":
-          // sql statement to display employees
-          sql = "SELECT * FROM employees";
-
-          pool.query(sql, (err, result) => {
-            if (err) {
-              return;
-            }
-            console.log(result.rows);
-            console.table(result.rows);
-          });
-          mainMenu();
+        db.viewAllEmployees()
+          // mainMenu();
 
           break;
 
@@ -68,91 +45,100 @@ function mainMenu() {
           break;
 
         case "Update Employee Role":
-          inquirer.prompt([
-            {
-              type: "input",
-              message: "Enter the employee id:",
-              name: "employeeId",
-            },
-            {
-              type: "input",
-              message: "Enter the new role id:",
-              name: "roleId",
-            }
-          ]).then((answers) =>{
-            employeeId = answers.employeeId;
-            sql = "UPDATE employees SET employee_name = $1 WHERE id = $2";
-            const params = [answers.roleId, employeeId];
-            console.log(params);
-  
-            pool.query(sql, params, (err, result) => {
-              if (err) {
-                console.log({ error: err.message });
-              } else if (!result.rowCount) {
-                console.log({
-                  message: "Employee not found",
-                });
-              } else {
-                console.log("Employee Updated!");
-              }
-              mainMenu();
-            });
-
-          })
-
-          break;
-
-        case "Add Employee":
           inquirer
             .prompt([
               {
                 type: "input",
-                message: "What is the first name of Employee?",
-                name: "employee",
+                message: "Enter the employee id:",
+                name: "employeeId",
+              },
+              {
+                type: "input",
+                message: "Enter the new role id:",
+                name: "roleId",
               },
             ])
             .then((answers) => {
-              sql = `INSERT INTO employees (first_name) VALUES ($1)`;
+              employeeId = answers.employeeId;
+              sql = "UPDATE employees SET employee_name = $1 WHERE id = $2";
+              const params = [answers.roleId, employeeId];
+              console.log(params);
 
-              pool.query(sql, [answers.employee], (err, result) => {
+              pool.query(sql, params, (err, result) => {
                 if (err) {
-                  console.log(err);
-                  return;
+                  console.log({ error: err.message });
+                } else if (!result.rowCount) {
+                  console.log({
+                    message: "Employee not found",
+                  });
+                } else {
+                  console.log("Employee Updated!");
                 }
-                console.log("Employee Added!");
+                mainMenu();
               });
             });
+
           break;
 
+        case "Add Employee":
+          return inquirer.prompt([
+              {
+                type: "input",
+                message: "What is the first name of Employee?",
+                name: "first_name",
+              },
+              {
+                type: "input",
+                message: "What is the last name of Employee?",
+                name: "last_name",
+              },
+              {
+                type: "input",
+                message: "What is the role id of Employee?(1,2,3,4)",
+                name: "role_id",
+              },
+            ])
+            .then((answers) => {
+              console.log(answers)
+              db.addNewEmployee(answers)
+            })
+          // break;
+
         case "Add Role":
-          inquirer.prompt([
-            {
-              type: "input",
-              message: "Enter the role title:",
-              name: "title",
-            },
-            {
-              type: "input",
-              message: "Enter the role salary:",
-              name: "salary",
-            },
-            {
-              type: "input",
-              message: "Enter the department id:",
-              name: "departmentId",
-            },
-          ]).then((answers) => {
-            sql = `INSERT INTO roles (title, salary, department_id) VALUES ($1, $2, $3)`;
-      
-            pool.query(sql, [answers.title, answers.salary, answers.departmentId], (err, result) => {
-              if (err) {
-                console.log(err);
-                return;
-              }
-              console.log("Role Added!");
-              mainMenu();
+          inquirer
+            .prompt([
+              {
+                type: "input",
+                message: "Enter the role title:",
+                name: "title",
+              },
+              {
+                type: "input",
+                message: "Enter the role salary:",
+                name: "salary",
+              },
+              {
+                type: "input",
+                message: "Enter the department id:",
+                name: "departmentId",
+              },
+            ])
+            .then((answers) => {
+              sql = `INSERT INTO roles (title, salary, department_id) VALUES ($1, $2, $3)`;
+
+              pool.query(
+                sql,
+                [answers.title, answers.salary, answers.departmentId],
+                (err, result) => {
+                  if (err) {
+                    console.log(err);
+                    return;
+                  }
+                  console.log("Role Added!");
+                  mainMenu();
+                }
+              );
             });
-          });
           break;
 
         case "View All Departments":
@@ -169,18 +155,37 @@ function mainMenu() {
           break;
 
         case "Add Department":
+          inquirer
+            .prompt([
+              {
+                type: "input",
+                message: "Enter the name of department:",
+                name: "department",
+              },
+            ])
+            .then((answers) => {
+              sql = `INSERT INTO department (name) VALUES ($1, $2, $3)`;
+
+              pool.query(sql, [answers.name], (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return;
+                }
+                console.log("Department Added!");
+                mainMenu();
+              });
+            });
           break;
 
         case "Quit":
-          console.log("Thank you, Goodbye!")
+          console.log("Thank you, Goodbye!");
           process.exit();
-        }
-        mainMenu();
+      }
+      mainMenu();
     })
     .then(() => {
       console.log("Main Menu");
     });
 }
-
 
 mainMenu();
